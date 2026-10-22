@@ -9,12 +9,12 @@ const validClaims=()=>lessons.flatMap(l=>Object.keys(rewardAmounts).map(k=>`${l.
 export function readGame():Game{try{const d=JSON.parse(localStorage.getItem(gameKey)||'{}');return {claims:Array.isArray(d?.claims)?[...new Set<string>(d.claims.filter((x:unknown)=>typeof x==='string'&&validClaims().includes(x)))]:[],reviewed:Array.isArray(d?.reviewed)?d.reviewed.filter((x:unknown)=>lessons.some(l=>l.id===x)):[]}}catch{return {claims:[],reviewed:[]}}}
 export function migrateGame():Game{
  const game=readGame(),records=readRecords()
- for(const l of lessons){if(readProgress().includes(l.id))game.claims.push(`${l.id}:lesson`);if(records[l.id]){game.claims.push(`${l.id}:practice`);if(records[l.id].correct===records[l.id].total)game.claims.push(`${l.id}:perfect`)}}
+ for(const l of lessons){if(readProgress().includes(l.id))game.claims.push(`${l.id}:lesson`);if(records[l.id]&&records[l.id].rewardEligible!==false){game.claims.push(`${l.id}:practice`);if(records[l.id].correct===records[l.id].total)game.claims.push(`${l.id}:perfect`)}}
  return {...game,claims:[...new Set(game.claims)]}
 }
 export function balance(game:Game){return game.claims.reduce((n,key)=>n+rewardAmounts[key.split(':').at(-1) as RewardKind],0)}
 export function grant(game:Game,id:string,kinds:RewardKind[]){if(!lessons.some(l=>l.id===id))return game;return {...game,claims:[...new Set([...game.claims,...kinds.map(k=>`${id}:${k}`)])]}}
-export function unlocked(index:number,completed:string[],courses=lessons){return index===0||completed.includes(courses[index].id)||courses.slice(0,index).every(l=>completed.includes(l.id))}
+export function unlocked(index:number,completed:string[],courses=lessons){return !!courses[index]&&(index===0||completed.includes(courses[index].id)||completed.includes(courses[index-1].id))}
 export function useGame(){
  const [game,setGame]=useState(migrateGame),current=useRef(game)
  const [storageWarning,setWarning]=useState('')
