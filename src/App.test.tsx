@@ -13,7 +13,7 @@ test('complete a lesson and retain progress after remount',async()=>{
  expect(JSON.parse(localStorage.getItem(storageKey)!)).toEqual(['bpmf']);
  view.unmount();render(<App/>);
  await user.click(screen.getByRole('button',{name:'我的學習'}));
- expect(screen.getByText(/已完成 1 \/ 2 堂課/)).toBeInTheDocument();
+ expect(screen.getByText(/已完成 1 \/ 15 堂課/)).toBeInTheDocument();
 })
 test('malformed storage does not break app and Taiwanese remains independent',async()=>{
  localStorage.setItem(storageKey,'broken');render(<App/>);

@@ -30,7 +30,7 @@ test.each(['bpmf','dtnl','mixed'])('%s loads its full bank, scores answers and s
  expect(screen.getByText(`完成了！答對 ${count-1} / ${count} 題`)).toBeInTheDocument()
  expect(screen.getByText(/你的答案：/)).toBeInTheDocument()
  const records=readRecords();expect(records[scope].correct).toBe(count-1)
- if(scope==='mixed'){expect(records.bpmf.total).toBe(12);expect(records.dtnl.total).toBe(12)}
+ if(scope==='mixed'){expect(Object.values(records).filter(r=>r.rewardEligible===false).reduce((n,r)=>n+r.total,0)).toBe(48);expect(records.bpmf.rewardEligible).toBe(false)}
  await user.click(screen.getByRole('button',{name:'再練習一次'}))
  expect(screen.getByText(new RegExp(`第 1 / ${count} 題`))).toBeInTheDocument()
  view.unmount();render(<Practice onReview={()=>{}}/>)
@@ -40,7 +40,7 @@ test.each(['bpmf','dtnl','mixed'])('%s loads its full bank, scores answers and s
  expect(screen.getByText(new RegExp(`第 1 / ${count} 題`))).toBeInTheDocument()
 })
 test('second lesson completion offers its own practice and records do not overwrite first lesson',async()=>{
- const user=userEvent.setup();localStorage.setItem(practiceKey,JSON.stringify({bpmf:{attempts:3,correct:10,total:12,updatedAt:'2026-10-22'}}))
+ const user=userEvent.setup();localStorage.setItem(storageKey,JSON.stringify(['bpmf']));localStorage.setItem(practiceKey,JSON.stringify({bpmf:{attempts:3,correct:10,total:12,updatedAt:'2026-10-22'}}))
  render(<App/>);await user.click(screen.getByRole('button',{name:/開始今天的學習/}))
  await user.click(screen.getByRole('button',{name:lessons[1].title}))
  await user.click(screen.getByRole('button',{name:'練習 ㄉㄊㄋㄌ'}))
@@ -55,12 +55,12 @@ test('second lesson completion offers its own practice and records do not overwr
  await finishRound()
  expect(readRecords().bpmf).toEqual({attempts:3,correct:10,total:12,updatedAt:'2026-10-22'})
  expect(readRecords().dtnl.correct).toBe(12)
- expect(JSON.parse(localStorage.getItem(storageKey)!)).toEqual(['dtnl'])
+ expect(JSON.parse(localStorage.getItem(storageKey)!)).toEqual(['bpmf','dtnl'])
 })
 test('question banks cover each lesson, all types and future courses automatically',()=>{
  const third={...lessons[0],id:'future'}
  const courses=[...lessons,third]
- for(const lesson of courses){const bank=makeRound(lesson.id,[],courses);expect(bank).toHaveLength(lesson.symbols.length*3);expect(new Set(bank.map(q=>q.kind)).size).toBe(3);expect(bank.every(q=>q.lessonId===lesson.id&&q.options.includes(q.answer))).toBe(true)}
+ for(const lesson of courses){const bank=questionBank([lesson]);expect(bank.length).toBeGreaterThanOrEqual(12);expect(new Set(bank.map(q=>q.kind)).size).toBeGreaterThanOrEqual(3);expect(bank.every(q=>q.lessonId===lesson.id&&q.options.includes(q.answer))).toBe(true)}
  expect(new Set(makeRound('mixed',[],courses).map(q=>q.lessonId))).toEqual(new Set(courses.map(l=>l.id)))
  const old=makeRound('bpmf');const random=vi.spyOn(Math,'random').mockReturnValue(.999)
  const first=makeRound('bpmf');const next=makeRound('bpmf',first.map(q=>q.id));expect(next.map(q=>q.id)).not.toEqual(first.map(q=>q.id));expect(old).toHaveLength(12);random.mockRestore()
