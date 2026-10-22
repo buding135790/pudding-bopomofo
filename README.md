@@ -43,3 +43,15 @@ git pull --ff-only origin main
 git merge --no-ff origin/feat/pudding-classroom
 git push origin main
 ```
+
+## GitHub Pages 自动部署
+
+仓库 Settings → Pages → Source 选择 **GitHub Actions**。合并到 `main` 后，工作流会安装锁定依赖、检查 TypeScript、构建、运行交互测试，再将 `dist/` 部署至 Pages。也可以在 Actions → Deploy to GitHub Pages → Run workflow 中选择 main 手动重试。
+
+部署成功后访问：https://buding135790.github.io/pudding-bopomofo/
+
+Vite 的 `base` 已设为 `/pudding-bopomofo/`。本地预览也应访问该子路径。网站以 React 状态切换课程，不使用路径路由，因此首页及课程页刷新均请求同一入口，不需要 404 回退；刷新会回到学习首页，已保存的课程完成记录仍保留。
+
+localStorage 按网站来源隔离：本地预览的学习记录不会迁移到 GitHub Pages。相同 Pages 地址下后续更新保留既有记录，除非用户清除浏览器数据。
+
+发布后可在手机或浏览器设备模式下检查窄屏菜单、课程切换、练习反馈及刷新后的学习记录。首次真实部署与真实设备显示需要在 Pages 发布后确认。
