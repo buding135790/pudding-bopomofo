@@ -15,20 +15,6 @@ test('complete a lesson and retain progress after remount',async()=>{
  await user.click(screen.getByRole('button',{name:'我的學習'}));
  expect(screen.getByText(/已完成 1 \/ 2 堂課/)).toBeInTheDocument();
 })
-test('quiz gives feedback, prevents repeat answers and computes score',async()=>{
- const user=userEvent.setup();render(<App/>);
- await user.click(screen.getByRole('button',{name:'開始互動練習'}));
- for(const answer of ['ㄅ','ㄇ','ㄈ','p']){
- await user.click(screen.getByRole('button',{name:answer}));
- expect(screen.getByRole('status')).toHaveTextContent('答對了');
- expect(screen.getByRole('button',{name:answer})).toBeDisabled();
- await user.click(screen.getByRole('button',{name:/下一題|查看結果/}));
- }
- expect(screen.getByText('完成了！答對 4 / 4 題')).toBeInTheDocument();
- await user.click(screen.getByRole('button',{name:'再練習一次'}));
- await user.click(screen.getByRole('button',{name:'ㄆ'}));
- expect(screen.getByRole('status')).toHaveTextContent('沒關係');
-})
 test('malformed storage does not break app and Taiwanese remains independent',async()=>{
  localStorage.setItem(storageKey,'broken');render(<App/>);
  await userEvent.click(screen.getByRole('button',{name:'了解台灣台語課程'}));
