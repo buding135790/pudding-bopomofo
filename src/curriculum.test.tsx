@@ -30,22 +30,22 @@ test('samples new questions, preserves bank and limits mixed practice to availab
 })
 test('legacy two-lesson user sees all basic lessons and immediately continues through graduation and all later stages',async()=>{
  localStorage.setItem(storageKey,JSON.stringify(['bpmf','dtnl']));const user=userEvent.setup();const view=render(<App/>);
- const firstStage=screen.getByRole('heading',{name:'第一階段 · 基礎注音 · 37 個符號'}).closest('section')!
+ const firstStage=screen.getByRole('heading',{name:'基礎注音課程'}).closest('section')!
  expect(within(firstStage).getAllByRole('article')).toHaveLength(11)
  expect(screen.getByRole('button',{name:'繼續學習：認識 ㄍ ㄎ ㄏ'})).toBeEnabled()
  const third=lessons[2]
- await user.click(screen.getByRole('button',{name:`繼續學習：${third.title}`}));expect(screen.getByText('漢語拼音：g')).toBeInTheDocument()
- expect(screen.getByRole('button',{name:lessons[3].title})).toBeDisabled()
+ await user.click(screen.getByRole('button',{name:`繼續學習：${third.title}`}));expect(screen.getByText('g',{selector:'dd'})).toBeInTheDocument()
+ expect(screen.getByRole('option',{name:lessons[3].title+'（未解鎖）'})).toBeDisabled()
  for(let index=2;index<lessons.length;index++){
   const lesson=lessons[index]
-  for(let card=1;card<lesson.symbols.length;card++)await user.click(screen.getByRole('button',{name:/下一個符號|下一張卡片/}))
+  for(let card=1;card<lesson.symbols.length;card++)await user.click(screen.getByRole('button',{name:/下一步/}))
   await user.click(screen.getByRole('button',{name:'完成本堂課'}))
   expect(readProgress()).toContain(lesson.id)
-  if(index===10){expect(screen.getByLabelText('基礎注音畢業成就')).toBeInTheDocument();expect(graduated(readProgress())).toBe(true)}
+  if(index===10){expect(graduated(readProgress())).toBe(true);await user.click(screen.getByRole('button',{name:'學習課程'}));expect(screen.getByLabelText('基礎注音畢業成就')).toBeInTheDocument()}
   if(index<lessons.length-1){expect(unlocked(index+1,readProgress())).toBe(true);await user.click(screen.getByRole('button',{name:`繼續學習：${lessons[index+1].title}`}))}
  }
  expect(readProgress()).toEqual(lessons.map(l=>l.id));view.unmount();render(<App/>);
- expect(screen.getByLabelText('基礎注音畢業成就')).toBeInTheDocument();expect(screen.getByText('所有階段已完成，歡迎再來複習 ♡')).toBeInTheDocument()
+ expect(screen.getByLabelText('基礎注音畢業成就')).toBeInTheDocument();expect(screen.getByText('全部課程已完成，可選擇課程複習。')).toBeInTheDocument()
 },20000)
 test.each(['gkh','iwu','aoee','er','tones','blending','daily-words','short-reading'])('%s supports a real 12-question interactive round and persistent results',async id=>{
  const user=userEvent.setup();const view=render(<Practice initialLessonId={id} onReview={()=>{}}/>);await user.click(screen.getByRole('button',{name:/開始本組練習/}))
@@ -53,5 +53,5 @@ test.each(['gkh','iwu','aoee','er','tones','blending','daily-words','short-readi
   const prompt=screen.getAllByRole('heading',{level:2}).at(-1)!.textContent;const q=questionBank([lessons.find(l=>l.id===id)!]).find(q=>q.prompt===prompt)!
   expect(q).toBeDefined();await user.click(screen.getByRole('button',{name:q.answer}));await user.click(screen.getByRole('button',{name:/下一題|查看結果/}))
  }
- expect(screen.getByText('完成了！答對 12 / 12 題')).toBeInTheDocument();view.unmount();render(<Practice onReview={()=>{}}/>);expect(screen.getByLabelText('選擇練習課程')).toHaveValue(id);expect(screen.getByText(new RegExp(`${lessons.find(l=>l.id===id)!.title}：已練習 1 次`))).toBeInTheDocument()
+ expect(screen.getByText('完成了！答對 12 / 12 題')).toBeInTheDocument();view.unmount();render(<Practice onReview={()=>{}}/>);expect(screen.getByLabelText('選擇練習課程')).toHaveValue(id);expect(screen.getByText('上次練習：12 / 12')).toBeInTheDocument()
 })

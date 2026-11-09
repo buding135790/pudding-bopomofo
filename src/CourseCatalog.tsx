@@ -1,8 +1,15 @@
-import {Check,Lock,ArrowRight,Trophy} from 'lucide-react'
 import {basicLessons,graduated,lessons,nextLessonIndex,stages} from './data'
 import {unlocked} from './game'
-export function Graduation({completed}:{completed:string[]}){return graduated(completed)?<aside className="graduation" aria-label="基礎注音畢業成就"><Trophy size={32}/><div><h2>37 個符號，基礎注音畢業！</h2><p>11 課全部完成，聲調、拼讀、詞語與閱讀正等著你。你可以隨時回來複習。</p></div></aside>:null}
-export default function CourseCatalog({completed,onOpen,onReview}:{completed:string[];onOpen:(i:number)=>void;onReview:(i:number)=>void}){
+export function Graduation({completed}:{completed:string[]}){
+ return graduated(completed)?<p className="completion-note" aria-label="基礎注音畢業成就">基礎注音已完成：37 個符號，11 節課。</p>:null
+}
+export default function CourseCatalog({completed,onOpen,onReview,section='all'}:{completed:string[];onOpen:(i:number)=>void;onReview:(i:number)=>void;section?:'basic'|'advanced'|'all'}){
  const next=nextLessonIndex(completed)
- return <section className="curriculum-catalog"><div className="section-heading"><div><div className="eyebrow">YOUR WHOLE LEARNING JOURNEY</div><h2>完整學習旅程</h2></div><p>不限每日堂數，完成就能繼續。</p></div><Graduation completed={completed}/><div className="journey-progress"><strong>基礎課程 {basicLessons.filter(l=>completed.includes(l.id)).length} / 11</strong>{next>=0?<button className="primary" onClick={()=>onOpen(next)}>繼續學習：{lessons[next].title} <ArrowRight size={16}/></button>:<span>所有階段已完成，歡迎再來複習 ♡</span>}</div>{stages.map(stage=><section className="curriculum-stage" key={stage.id}><h3>第{['一','二','三','四','五'][stage.id-1]}階段 · {stage.title}</h3><p>{stage.description}</p><div className="catalog-grid">{lessons.filter(l=>l.stage===stage.id).map(l=>{const i=lessons.indexOf(l),done=completed.includes(l.id),open=unlocked(i,completed);return <article key={l.id} className={`catalog-card ${done?'completed':open?'available':'locked'}`}><div className="card-top"><span className="badge">{l.stage===1?`第 ${basicLessons.indexOf(l)+1} 課`:`第 ${l.stage} 階段`}</span>{done?<Check size={20}/>:!open?<Lock size={18}/>:<span>✧</span>}</div><h4>{l.title}</h4><p>{done?'✓ 已完成 · 隨時複習':open?'已解鎖 · 現在就能學習':`解鎖條件：完成「${lessons[i-1].title}」`}</p><button className="secondary" disabled={!open} onClick={()=>done?onReview(i):onOpen(i)}>{done?'複習本課':open?'學習本課':'尚未解鎖'}</button></article>})}</div></section>)}</section>
+ const basicCount=basicLessons.filter(l=>completed.includes(l.id)).length
+ const selected=stages.filter(s=>section==='all'||(section==='basic'?s.id===1:s.id>1))
+ return <section className="curriculum-catalog">
+  <div className="page-heading"><h1>{section==='advanced'?'拼讀學習':'學習課程'}</h1><span>{section==='advanced'?'聲調、拼讀、詞語與閱讀':'37 個注音符號 · 11 節基礎課程'}</span></div>
+  {section!=='advanced'&&<section className="progress-panel" aria-label="目前學習進度"><div><strong>基礎課程 {basicCount} / 11</strong><span>{Math.round(basicCount/11*100)}%</span></div><progress value={basicCount} max={11} aria-label="基礎課程完成比例"/><div className="continue-row">{next>=0?<button className="primary" onClick={()=>onOpen(next)}>繼續學習：{lessons[next].title}</button>:<p>全部課程已完成，可選擇課程複習。</p>}</div><Graduation completed={completed}/></section>}
+  {selected.map(stage=><section className="curriculum-stage" key={stage.id}><h2>{stage.id===1?'基礎注音課程':stage.title}</h2><ol className="course-list">{lessons.filter(l=>l.stage===stage.id).map(l=>{const i=lessons.indexOf(l),done=completed.includes(l.id),open=unlocked(i,completed);return <li key={l.id}><article className={`course-row ${done?'completed':open?'available':'locked'}`}><span className="course-number">{i+1}</span><div className="course-info"><h3>{l.title}</h3><p>{done?'已完成':open?'可學習':`完成「${lessons[i-1].title}」後解鎖`}</p></div><button className={open&&!done?'primary':'secondary'} disabled={!open} aria-label={`${done?'複習':open?'學習':'尚未解鎖'}：${l.title}`} onClick={()=>done?onReview(i):onOpen(i)}>{done?'複習':open?'學習':'未解鎖'}</button></article></li>})}</ol></section>)}
+ </section>
 }

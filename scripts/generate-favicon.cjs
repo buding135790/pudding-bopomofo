@@ -6,11 +6,11 @@ const path = require('node:path');
 const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
 (async () => {
   const root = path.resolve(__dirname, '..');
-  const source = fs.readFileSync(path.join(root, 'src/App.tsx'), 'utf8');
+  const source = fs.readFileSync(path.join(root, 'scripts/favicon-mascot.tsx'), 'utf8');
   const match = source.match(/function Pudding\([\s\S]*?return (<div[\s\S]*?<\/div>)}\n/);
   if (!match) throw new Error('Pudding component changed; review extraction before generating icons.');
   const markup = match[1].replace('className={`pudding ${small?\'small\':\'\'}`}', 'class="pudding"').replaceAll('className=', 'class=').replace(/<(div|i)([^<>]*?)\/>/g, '<$1$2></$1>');
-  const css = fs.readFileSync(path.join(root, 'src/style.css'), 'utf8').replace("@import 'tailwindcss';", '');
+  const css = fs.readFileSync(path.join(root, 'scripts/favicon-mascot.css'), 'utf8').replace("@import 'tailwindcss';", '');
   const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || '/usr/bin/chromium', args: ['--no-sandbox'] });
   try {
     const output = path.join(root, 'public');
